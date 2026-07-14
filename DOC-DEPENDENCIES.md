@@ -26,8 +26,8 @@ Each article carries one `**Depends:**` line, immediately after `**Updated:**`:
 | Shared lib | `scripts/doc_deps.py` | Parse `**Depends:**`, match changed files (single source of truth) |
 | Index builder | `scripts/build-doc-deps-index.py` | Writes `schema/doc-deps-index.json`; `--tld` validates paths |
 | Query | `scripts/doc-deps-query.py` | Reminder for a set of changes (used by hooks) |
-| CLI | `scripts/wiki-deps` | `query` / `index` / `install-hooks` / `for-doc` / `docs` |
-| MCP server | `scripts/doc_deps_mcp.py` | Tools: `which_docs_depend_on`, `docs_for_doc`, `rebuild_index` |
+| CLI | `scripts/wiki-deps` | `query` / `index` / `install-hooks` / `for-doc` / `docs` (+ `search` / `context` / `reindex` / `status`, see [SEARCH.md](SEARCH.md)) |
+| MCP server | `scripts/wiki_mcp.py` | Unified `wiki` server. Dependency tools: `which_docs_depend_on`, `docs_for_files`, `docs_for_doc`, `rebuild_dep_index` (plus search/RAG tools — see [SEARCH.md](SEARCH.md)) |
 | Git hooks | `hooks/repo-hooks/` | post-commit/merge/checkout reminders in tracked repos |
 | Cursor hook | `hooks/wiki-doc-deps.sh` + `scripts/cursor_doc_deps_hook.py` | `postToolUse` reminder when an agent edits a tracked file |
 | Skill | `skills/wiki-doc-deps/SKILL.md` | Makes `**Depends:**` required for future docs |

@@ -4,7 +4,7 @@
     "sessionStart": [
       {
         "command": "./hooks/wiki-session-start.sh",
-        "timeout": 5
+        "timeout": 20
       }
     ],
     "stop": [

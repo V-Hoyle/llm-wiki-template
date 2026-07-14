@@ -69,6 +69,43 @@ for bindir in /opt/homebrew/bin /usr/local/bin "${HOME}/.local/bin"; do
   fi
 done
 
+# 4d. Search backend: Python venv (qdrant-client + ollama) for semantic search.
+VENV="${WIKI_ROOT}/.venv"
+if [[ ! -x "${VENV}/bin/python" ]]; then
+  PYBIN=""
+  # Prefer 3.11-3.13 for the widest qdrant-client/grpcio/numpy wheel coverage.
+  for c in python3.12 python3.13 python3.11 python3; do
+    command -v "$c" >/dev/null 2>&1 && { PYBIN="$c"; break; }
+  done
+  if [[ -n "${PYBIN}" ]]; then
+    echo "Creating search venv (${PYBIN}) at ${VENV}..."
+    "${PYBIN}" -m venv "${VENV}"
+    "${VENV}/bin/python" -m pip install --quiet --upgrade pip
+    "${VENV}/bin/python" -m pip install --quiet -r "${WIKI_ROOT}/requirements.txt" \
+      || echo "WARN: search deps failed to install — semantic search disabled until 'pip install -r requirements.txt' succeeds."
+  else
+    echo "WARN: no python3 found — skipping search venv (lexical search + deps still work)."
+  fi
+fi
+
+# 4e. Ollama embedding model (local semantic search backend).
+EMBED_MODEL="${WIKI_EMBED_MODEL:-qwen3-embedding:8b}"
+if command -v ollama >/dev/null 2>&1; then
+  if ! ollama list 2>/dev/null | grep -q "${EMBED_MODEL%%:*}"; then
+    echo "Pulling Ollama embedding model ${EMBED_MODEL} (~4.7 GB, one-time)..."
+    ollama pull "${EMBED_MODEL}" \
+      || echo "WARN: 'ollama pull ${EMBED_MODEL}' failed — pull it manually for semantic search."
+  fi
+else
+  cat <<EOF
+NOTE: Ollama is not installed — semantic search is disabled (lexical search + deps still work).
+  1. Install: https://ollama.com/download   (macOS: brew install ollama)
+  2. Start:   ollama serve                   (or open the Ollama app)
+  3. Model:   ollama pull ${EMBED_MODEL}
+  4. Index:   wiki-deps reindex
+EOF
+fi
+
 # 5. Worker deps
 echo "Installing npm dependencies..."
 cd "${WIKI_ROOT}/scripts"
@@ -101,9 +138,44 @@ if [[ ! -d "${WIKI_ROOT}/.git" ]]; then
   echo "Initialized git repo in ${WIKI_ROOT}"
 fi
 
+# 8b. Wiki-repo post-commit hook: keep the embedding index fresh after commits.
+PC="${WIKI_ROOT}/.git/hooks/post-commit"
+if [[ ! -e "${PC}" ]]; then
+  install -m 755 "${WIKI_ROOT}/hooks/wiki-reindex-post-commit" "${PC}"
+  echo "Installed wiki post-commit reindex hook"
+elif ! grep -q build-wiki-index "${PC}" 2>/dev/null; then
+  echo "NOTE: ${PC} exists — chain in hooks/wiki-reindex-post-commit manually"
+fi
+
 # 9. Build the doc-dependency index (best-effort)
 if command -v python3 >/dev/null 2>&1; then
   python3 "${WIKI_ROOT}/scripts/build-doc-deps-index.py" --tld "${HOME}/src" --quiet || true
+fi
+
+# 9b. Build the embedding/BM25 search index (best-effort; needs venv + Ollama).
+if [[ -x "${VENV}/bin/python" ]]; then
+  echo "Building wiki embedding index (first build may take a few minutes)..."
+  "${VENV}/bin/python" "${WIKI_ROOT}/scripts/build-wiki-index.py" \
+    || echo "WARN: embedding index build failed — run 'wiki-deps reindex' once Ollama is set up."
+fi
+
+# 9c. Register the unified 'wiki' MCP server (search + RAG + deps).
+MCP_JSON="${HOME}/.cursor/mcp.json"
+if [[ ! -f "${MCP_JSON}" ]]; then
+  cat > "${MCP_JSON}" <<EOF
+{
+  "mcpServers": {
+    "wiki": {
+      "command": "${VENV}/bin/python",
+      "args": ["${WIKI_ROOT}/scripts/wiki_mcp.py"]
+    }
+  }
+}
+EOF
+  echo "Created ${MCP_JSON} with the 'wiki' MCP server"
+else
+  echo "NOTE: ${MCP_JSON} exists — ensure it includes the 'wiki' server:"
+  echo "      \"wiki\": { \"command\": \"${VENV}/bin/python\", \"args\": [\"${WIKI_ROOT}/scripts/wiki_mcp.py\"] }"
 fi
 
 echo ""
@@ -114,4 +186,6 @@ echo "  2. Edit ${CURSOR_HOOKS}/lib/wiki-common.sh path keywords"
 echo "  3. Add CURSOR_API_KEY to ${WIKI_ROOT}/.env"
 echo "  4. Read BOOTSTRAP.md — seed wiki content (Phase 3)"
 echo "  5. Install repo reminder hooks: wiki-deps install-hooks --tld ~/src (see DOC-DEPENDENCIES.md)"
-echo "  6. Optional: INSTALL_LAUNCHD=1 ./install.sh"
+echo "  6. Semantic search: ensure Ollama is running (ollama serve) + model pulled (${EMBED_MODEL}); then 'wiki-deps reindex'"
+echo "  7. Restart Cursor so the 'wiki' MCP server (search + RAG + deps) loads"
+echo "  8. Optional: INSTALL_LAUNCHD=1 ./install.sh"

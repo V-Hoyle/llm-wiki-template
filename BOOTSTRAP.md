@@ -378,4 +378,30 @@ see [DOC-DEPENDENCIES.md](DOC-DEPENDENCIES.md).
 
 ---
 
+## Phase 6 — Hybrid search & RAG (optional, local)
+
+Make the wiki *searchable* — dense semantic search (local embeddings in a Qdrant
+HNSW index) fused with BM25 lexical search, exposed as MCP tools and a CLI, plus a
+semantic session warm-up. Everything runs on your machine; lexical search and the
+dependency tools keep working even without the model.
+
+```bash
+# 1. Python venv for the search stack (install.sh does this automatically)
+python3 -m venv ~/.cursor/llm-wiki/.venv
+~/.cursor/llm-wiki/.venv/bin/pip install -r ~/.cursor/llm-wiki/requirements.txt
+
+# 2. Local embedding model
+#    Install Ollama (https://ollama.com/download), then:
+ollama pull qwen3-embedding:8b
+
+# 3. Build the index, then register the MCP server (see examples/mcp.json)
+wiki-deps reindex
+```
+
+Query it via `wiki-deps search "..."` / `wiki-deps context "..."`, or the `wiki`
+MCP server tools (`search_wiki`, `get_context_pack`, `get_article`, …). Full setup,
+tool list, config, and upgrade notes: [SEARCH.md](SEARCH.md).
+
+---
+
 *Template repo: [github.com/rylanhess/llm-wiki-template](https://github.com/rylanhess/llm-wiki-template)*

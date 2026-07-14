@@ -1,22 +1,52 @@
 #!/usr/bin/env bash
-# Unified CLI for the wiki doc-dependency system.
+# Unified CLI for the local LLM wiki: dependencies + hybrid search / RAG.
 #
-#   wiki-deps query --repo <name> --change <path>:<status> ...   # which docs depend on changes
+# Dependencies (stdlib, no venv needed):
+#   wiki-deps query --repo <name> --change <path>:<status> ...   # docs depending on changes
 #   wiki-deps query --repo <name> --name-status                  # read `git diff --name-status` on stdin
 #   wiki-deps index [--tld ~/src] [--check]                      # (re)build schema/doc-deps-index.json
-#   wiki-deps install-hooks [--tld ~/src] [--uninstall]          # install git reminder hooks into tracked repos
+#   wiki-deps install-hooks [--tld ~/src] [--uninstall]          # install git reminder hooks
 #   wiki-deps for-doc <wiki/topic/article.md>                    # show a doc's declared dependencies
 #   wiki-deps docs                                               # list all docs + their dependency entries
+#
+# Search / RAG (needs the venv + Ollama; see `reindex` output if not set up):
+#   wiki-deps search <query> [-k N] [--mode hybrid|semantic|lexical] [--topic T]
+#   wiki-deps context <query> [--budget N]                       # assemble a context pack
+#   wiki-deps reindex [--full]                                   # (re)build embeddings + vector store
+#   wiki-deps status                                             # report embedding-index freshness
+#
 #   wiki-deps help
 set -euo pipefail
 WIKI_ROOT="${WIKI_ROOT:-$HOME/.cursor/llm-wiki}"
 S="$WIKI_ROOT/scripts"
+VENV_PY="$WIKI_ROOT/.venv/bin/python"
+
+# Search subcommands need the venv (qdrant-client + ollama). Guide the user if
+# it is missing rather than failing cryptically.
+run_search() {
+  if [[ ! -x "$VENV_PY" ]]; then
+    cat >&2 <<EOF
+Search needs the wiki venv, which is missing at:
+  $VENV_PY
+
+Create it:
+  python3 -m venv "$WIKI_ROOT/.venv" && "$WIKI_ROOT/.venv/bin/pip" install -r "$WIKI_ROOT/requirements.txt"
+And ensure Ollama + the embedding model are installed (see: wiki-deps reindex).
+EOF
+    exit 1
+  fi
+  exec "$VENV_PY" "$S/wiki_search.py" "$@"
+}
 
 cmd="${1:-help}"; shift 2>/dev/null || true
 case "$cmd" in
   query)         exec python3 "$S/doc-deps-query.py" "$@" ;;
   index)         exec python3 "$S/build-doc-deps-index.py" "$@" ;;
   install-hooks) exec bash "$S/install-repo-hooks.sh" "$@" ;;
+  search)        run_search search "$@" ;;
+  context)       run_search context "$@" ;;
+  reindex)       run_search reindex "$@" ;;
+  status)        run_search status "$@" ;;
   for-doc)
     exec python3 -c "
 import sys; sys.path.insert(0,'$S')
@@ -35,7 +65,7 @@ for d in iter_docs():
     print(f'{d.rel}: {\"; \".join(d.depends) or \"(none)\"}')
 " ;;
   help|-h|--help)
-    sed -n '2,10p' "$0" | sed 's/^# \{0,1\}//' ;;
+    sed -n '2,18p' "$0" | sed 's/^# \{0,1\}//' ;;
   *)
     echo "unknown subcommand: $cmd (try: wiki-deps help)" >&2; exit 1 ;;
 esac

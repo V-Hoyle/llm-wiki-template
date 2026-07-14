@@ -31,15 +31,18 @@ npx add-skill Astro-Han/karpathy-llm-wiki
 
 | Path | Purpose |
 |------|---------|
-| `BOOTSTRAP.md` | Full setup guide (phases 1–4) |
-| `install.sh` | Copy to `~/.cursor/llm-wiki`, install hooks + rules |
-| `hooks/` | Cursor sessionStart/sessionEnd scripts |
+| `BOOTSTRAP.md` | Full setup guide (phases 1–6) |
+| `install.sh` | Copy to `~/.cursor/llm-wiki`, install hooks + rules + search venv/index + MCP server |
+| `hooks/` | Cursor sessionStart/sessionEnd scripts (+ doc-deps and wiki-repo reindex hooks) |
 | `examples/hooks.json` | User-level Cursor hooks config |
+| `examples/mcp.json` | Unified `wiki` MCP server (search + RAG + deps) config |
 | `examples/llm-wiki.mdc` | Cursor rule for in-session wiki CRUD |
-| `scripts/` | Ingest worker, git backup, lint, adhoc ingest |
+| `scripts/` | Ingest worker, git backup, lint, adhoc ingest, search + dependency tooling |
 | `launchd/` | macOS plist templates for background jobs |
 | `schema/topics.json` | Example topic → repo mapping |
 | `wiki/` | Empty index + log stubs |
+| `SEARCH.md` | Hybrid search + RAG: Ollama/Qdrant setup, MCP/CLI tools, upgrade guide |
+| `requirements.txt` | Python deps for the optional search venv (`qdrant-client`, `ollama`, `numpy`) |
 | `DOC-DEPENDENCIES.md` | Doc file-dependency system: `**Depends:**` convention, `wiki-deps` CLI, MCP server, git + Cursor reminder hooks |
 | `hooks/repo-hooks/` | Git hooks (post-commit/merge/checkout) installed into tracked repos to remind you which docs depend on changed files |
 | `skills/wiki-doc-deps/` | Skill making the `**Depends:**` line required on every article |
@@ -48,13 +51,20 @@ npx add-skill Astro-Han/karpathy-llm-wiki
 
 ```
 Cursor session
-  sessionStart  → inject wiki articles
+  sessionStart  → semantic warm-up: inject relevant wiki sections
   sessionEnd    → queue substantive chats
         ↓
 raw/ (sources)  →  wiki/ (compiled articles)
-        ↑
-  background ingest worker (optional)
+        ↑                    │
+  background ingest worker   └─ hybrid search index (Qdrant HNSW + BM25)
+     (optional)                   ↑ Ollama qwen3-embedding:8b (local, optional)
 ```
+
+**Hybrid search & RAG** (optional, local): articles are embedded with a local
+Ollama model into a Qdrant HNSW index and fused with BM25. Query it via the
+`wiki` MCP server (`search_wiki`, `get_context_pack`, …) or `wiki-deps search`.
+Lexical search and dependency tools work without Ollama. See
+[SEARCH.md](SEARCH.md).
 
 ## Customize
 

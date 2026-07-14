@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# Post-commit hook for the wiki's OWN git repo (~/.cursor/llm-wiki).
+#
+# Keeps the embedding index fresh after commits -- e.g. when the background
+# ingest worker adds or edits articles. Runs the incremental reindex detached
+# so it never blocks the commit, and no-ops cleanly when the search venv is not
+# installed. (This is distinct from hooks/repo-hooks/, which remind you to
+# update docs when *tracked source repos* change.)
+set -euo pipefail
+
+WIKI_ROOT="${WIKI_ROOT:-$HOME/.cursor/llm-wiki}"
+VENV_PY="${WIKI_ROOT}/.venv/bin/python"
+BUILDER="${WIKI_ROOT}/scripts/build-wiki-index.py"
+
+[[ -x "${VENV_PY}" && -f "${BUILDER}" ]] || exit 0
+
+mkdir -p "${WIKI_ROOT}/.state/logs"
+# Detach so a cold model load never stalls the commit.
+( "${VENV_PY}" "${BUILDER}" >>"${WIKI_ROOT}/.state/logs/reindex.log" 2>&1 & ) || true
+exit 0

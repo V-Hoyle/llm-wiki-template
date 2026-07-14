@@ -1,0 +1,9 @@
+# Dependencies for the wiki search/RAG MCP server (scripts/wiki_mcp.py).
+# Installed into ~/.cursor/llm-wiki/.venv by install.sh.
+#
+# BM25 and the JSON-RPC transport are stdlib-only. Embeddings are served by a
+# local Ollama daemon (qwen3-embedding:8b); we talk to it via the official
+# `ollama` client. Vectors live in a Qdrant local-mode HNSW store.
+qdrant-client>=1.12
+ollama>=0.4
+numpy>=1.26

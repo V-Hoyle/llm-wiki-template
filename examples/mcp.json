@@ -1,0 +1,9 @@
+{
+  "//": "Unified local-wiki MCP server: hybrid search (Qdrant HNSW + BM25), RAG context packs, navigation, and dependency tools. install.sh writes this to ~/.cursor/mcp.json with absolute paths; adjust the paths below if you copy it by hand.",
+  "mcpServers": {
+    "wiki": {
+      "command": "~/.cursor/llm-wiki/.venv/bin/python",
+      "args": ["~/.cursor/llm-wiki/scripts/wiki_mcp.py"]
+    }
+  }
+}

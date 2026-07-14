@@ -19,7 +19,26 @@ if [[ -z "${paths_text}" ]]; then
   paths_text="$(wiki_json_get "${input}" '.workspace_root // .workspaceRoot // empty')"
 fi
 
+# The session payload may carry an initial prompt; if so it is the strongest
+# retrieval signal, so we pass it to the seed builder.
+prompt="$(wiki_json_get "${input}" '.prompt // .user_message // .userMessage // .initial_prompt // .input // empty')"
+
 topics="$(wiki_topics_from_paths "${paths_text}")"
+
+# --- Preferred path: semantic (hybrid) warm-up via the venv -----------------
+VENV_PY="${WIKI_ROOT}/.venv/bin/python"
+SEARCH_PY="${WIKI_ROOT}/scripts/wiki_search.py"
+if [[ -x "${VENV_PY}" && -f "${SEARCH_PY}" ]]; then
+  out="$("${VENV_PY}" "${SEARCH_PY}" for-session \
+    --prompt "${prompt}" --topics "${topics}" --paths "${paths_text}" \
+    2>/dev/null || true)"
+  if [[ -n "${out}" ]]; then
+    printf '%s\n' "${out}"
+    exit 0
+  fi
+fi
+
+# --- Fallback: legacy topic-article dump (venv/Ollama/index unavailable) -----
 articles="$(wiki_find_articles_for_topics "${topics}")"
 
 context="# Work Brain (local wiki)\n\n"
