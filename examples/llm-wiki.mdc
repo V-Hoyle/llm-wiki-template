@@ -1,0 +1,17 @@
+---
+description: Personal local LLM wiki — JIT read and in-session CRUD (user-local only)
+alwaysApply: true
+---
+
+## Local work brain (`~/.cursor/llm-wiki/`)
+
+Hooks already inject wiki context at `sessionStart` and queue substantive sessions for background ingest at `stop` / `sessionEnd`.
+
+You still must:
+
+1. **Read (JIT):** When the task may depend on prior decisions, habits, or session history, read `~/.cursor/llm-wiki/wiki/index.md` and search relevant topic dirs before deep work — especially if hook context seems thin.
+2. **Update (in-session):** When this session adds, changes, or invalidates durable facts, patch the relevant `wiki/` article(s) and `wiki/index.md` in the same session. Use the karpathy-llm-wiki skill at `~/.agents/skills/karpathy-llm-wiki/SKILL.md` for Ingest, Query, and Lint when appropriate.
+3. **Archive (retire):** Mark superseded content with date and link to replacement; move stale pages to `wiki/archive/` — do not leave two conflicting truths.
+4. **Never write wiki files into employer/team git repos** — personal wiki stays under `~/.cursor/llm-wiki/`. Project rules in shared repos still win when they conflict with personal wiki content; surface conflicts in chat.
+
+**Skill path:** `~/.agents/skills/karpathy-llm-wiki/SKILL.md`

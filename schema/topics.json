@@ -1,0 +1,23 @@
+{
+  "wikiRoot": "~/.cursor/llm-wiki",
+  "skillPath": "~/.agents/skills/karpathy-llm-wiki/SKILL.md",
+  "topics": {
+    "my-app": {
+      "label": "My main application",
+      "sourceRepos": ["my-app"]
+    },
+    "infra": {
+      "label": "Infrastructure & ops",
+      "sourceRepos": ["terraform", "k8s-config"]
+    },
+    "decisions": {
+      "label": "Decisions & sessions",
+      "sourceRepos": []
+    }
+  },
+  "pathKeywords": {
+    "my-app": ["my-app", "frontend", "backend"],
+    "infra": ["terraform", "k8s", "infrastructure"],
+    "decisions": ["decisions"]
+  }
+}

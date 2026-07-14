@@ -1,0 +1,21 @@
+# Secrets
+.env
+
+# Node
+scripts/node_modules/
+scripts/**/__pycache__/
+**/__pycache__/
+
+# Runtime / logs
+.state/
+queue/pending.jsonl
+queue/processed/*.json
+
+# OS
+.DS_Store
+
+# Personal content (if you fork — template ships empty stubs only)
+# raw/**
+# wiki/**/*
+# !wiki/index.md
+# !wiki/log.md

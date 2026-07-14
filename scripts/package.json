@@ -1,0 +1,19 @@
+{
+  "name": "llm-wiki-workers",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "ingest": "tsx ingest-worker.ts",
+    "ingest:dry": "tsx ingest-worker.ts --dry-run",
+    "lint": "tsx lint-worker.ts",
+    "lint:dry": "tsx lint-worker.ts --dry-run",
+    "lint:force": "tsx lint-worker.ts --force"
+  },
+  "dependencies": {
+    "@cursor/sdk": "^1.0.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}
