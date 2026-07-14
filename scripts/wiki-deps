@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# Unified CLI for the wiki doc-dependency system.
+#
+#   wiki-deps query --repo <name> --change <path>:<status> ...   # which docs depend on changes
+#   wiki-deps query --repo <name> --name-status                  # read `git diff --name-status` on stdin
+#   wiki-deps index [--tld ~/src] [--check]                      # (re)build schema/doc-deps-index.json
+#   wiki-deps install-hooks [--tld ~/src] [--uninstall]          # install git reminder hooks into tracked repos
+#   wiki-deps for-doc <wiki/topic/article.md>                    # show a doc's declared dependencies
+#   wiki-deps docs                                               # list all docs + their dependency entries
+#   wiki-deps help
+set -euo pipefail
+WIKI_ROOT="${WIKI_ROOT:-$HOME/.cursor/llm-wiki}"
+S="$WIKI_ROOT/scripts"
+
+cmd="${1:-help}"; shift 2>/dev/null || true
+case "$cmd" in
+  query)         exec python3 "$S/doc-deps-query.py" "$@" ;;
+  index)         exec python3 "$S/build-doc-deps-index.py" "$@" ;;
+  install-hooks) exec bash "$S/install-repo-hooks.sh" "$@" ;;
+  for-doc)
+    exec python3 -c "
+import sys; sys.path.insert(0,'$S')
+from pathlib import Path
+from doc_deps import parse_doc, WIKI_ROOT
+p=Path(sys.argv[1]); p=p if p.is_absolute() else WIKI_ROOT/p
+d=parse_doc(p)
+print(f'{d.title} ({d.rel})  Updated: {d.updated or \"n/a\"}')
+print('Depends:'); [print('  -',e) for e in d.depends] or print('  (none)')
+" "${1:?usage: wiki-deps for-doc <path>}" ;;
+  docs)
+    exec python3 -c "
+import sys; sys.path.insert(0,'$S')
+from doc_deps import iter_docs
+for d in iter_docs():
+    print(f'{d.rel}: {\"; \".join(d.depends) or \"(none)\"}')
+" ;;
+  help|-h|--help)
+    sed -n '2,10p' "$0" | sed 's/^# \{0,1\}//' ;;
+  *)
+    echo "unknown subcommand: $cmd (try: wiki-deps help)" >&2; exit 1 ;;
+esac

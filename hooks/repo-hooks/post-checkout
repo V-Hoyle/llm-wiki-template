@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# >>> wiki-doc-deps hook >>> (managed by ~/.cursor/llm-wiki/scripts/install-repo-hooks.sh)
+DIR="$(cd "$(dirname "$0")" && pwd)"
+# shellcheck source=/dev/null
+. "$DIR/_wiki-doc-deps-common.sh"
+# args: <prev-HEAD> <new-HEAD> <branch-checkout-flag>
+prev="$1"; new="$2"; branch_flag="$3"
+if [ "$branch_flag" = "1" ] && [ -n "$prev" ] && [ -n "$new" ] && [ "$prev" != "$new" ]; then
+  wiki_deps_report "$prev" "$new"
+fi
+wiki_deps_run_local_chain "$DIR/post-checkout.local" "$@"
+# <<< wiki-doc-deps hook <<<

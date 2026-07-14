@@ -34,6 +34,7 @@ echo "Installing hook scripts to ${CURSOR_HOOKS}..."
 mkdir -p "${CURSOR_HOOKS}/lib"
 install -m 755 "${WIKI_ROOT}/hooks/wiki-session-start.sh" "${CURSOR_HOOKS}/"
 install -m 755 "${WIKI_ROOT}/hooks/wiki-session-end.sh" "${CURSOR_HOOKS}/"
+install -m 755 "${WIKI_ROOT}/hooks/wiki-doc-deps.sh" "${CURSOR_HOOKS}/"
 install -m 644 "${WIKI_ROOT}/hooks/lib/wiki-common.sh" "${CURSOR_HOOKS}/lib/"
 
 if [[ ! -f "${HOME}/.cursor/hooks.json" ]]; then
@@ -53,6 +54,20 @@ if [[ ! -f "${HOME}/.agents/skills/karpathy-llm-wiki/SKILL.md" ]]; then
   echo "Installing karpathy-llm-wiki skill..."
   npx --yes add-skill Astro-Han/karpathy-llm-wiki || echo "WARN: skill install failed — run: npx add-skill Astro-Han/karpathy-llm-wiki"
 fi
+
+# 4b. Vendored wiki-doc-deps skill (dependency-metadata convention)
+echo "Installing wiki-doc-deps skill..."
+mkdir -p "${HOME}/.agents/skills/wiki-doc-deps"
+cp "${WIKI_ROOT}/skills/wiki-doc-deps/SKILL.md" "${HOME}/.agents/skills/wiki-doc-deps/SKILL.md"
+
+# 4c. wiki-deps CLI onto PATH (best-effort; prefers a writable dir already on PATH)
+for bindir in /opt/homebrew/bin /usr/local/bin "${HOME}/.local/bin"; do
+  if [[ -d "${bindir}" && -w "${bindir}" ]] || { [[ "${bindir}" == "${HOME}/.local/bin" ]] && mkdir -p "${bindir}" 2>/dev/null; }; then
+    ln -sf "${WIKI_ROOT}/scripts/wiki-deps" "${bindir}/wiki-deps"
+    echo "Linked wiki-deps CLI -> ${bindir}/wiki-deps"
+    break
+  fi
+done
 
 # 5. Worker deps
 echo "Installing npm dependencies..."
@@ -86,6 +101,11 @@ if [[ ! -d "${WIKI_ROOT}/.git" ]]; then
   echo "Initialized git repo in ${WIKI_ROOT}"
 fi
 
+# 9. Build the doc-dependency index (best-effort)
+if command -v python3 >/dev/null 2>&1; then
+  python3 "${WIKI_ROOT}/scripts/build-doc-deps-index.py" --tld "${HOME}/src" --quiet || true
+fi
+
 echo ""
 echo "=== Done ==="
 echo "Next steps:"
@@ -93,4 +113,5 @@ echo "  1. Edit ${WIKI_ROOT}/schema/topics.json for your repos"
 echo "  2. Edit ${CURSOR_HOOKS}/lib/wiki-common.sh path keywords"
 echo "  3. Add CURSOR_API_KEY to ${WIKI_ROOT}/.env"
 echo "  4. Read BOOTSTRAP.md — seed wiki content (Phase 3)"
-echo "  5. Optional: INSTALL_LAUNCHD=1 ./install.sh"
+echo "  5. Install repo reminder hooks: wiki-deps install-hooks --tld ~/src (see DOC-DEPENDENCIES.md)"
+echo "  6. Optional: INSTALL_LAUNCHD=1 ./install.sh"

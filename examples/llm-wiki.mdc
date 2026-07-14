@@ -11,7 +11,8 @@ You still must:
 
 1. **Read (JIT):** When the task may depend on prior decisions, habits, or session history, read `~/.cursor/llm-wiki/wiki/index.md` and search relevant topic dirs before deep work — especially if hook context seems thin.
 2. **Update (in-session):** When this session adds, changes, or invalidates durable facts, patch the relevant `wiki/` article(s) and `wiki/index.md` in the same session. Use the karpathy-llm-wiki skill at `~/.agents/skills/karpathy-llm-wiki/SKILL.md` for Ingest, Query, and Lint when appropriate.
-3. **Archive (retire):** Mark superseded content with date and link to replacement; move stale pages to `wiki/archive/` — do not leave two conflicting truths.
-4. **Never write wiki files into employer/team git repos** — personal wiki stays under `~/.cursor/llm-wiki/`. Project rules in shared repos still win when they conflict with personal wiki content; surface conflicts in chat.
+3. **Declare dependencies (REQUIRED):** Every new or edited article MUST carry a `**Depends:**` line (right after `**Updated:**`) listing the repo-qualified source files it was compiled from — e.g. `**Depends:** infrastructure/datasembly_iac/modules/iam/**`. Follow the `wiki-doc-deps` skill at `~/.agents/skills/wiki-doc-deps/SKILL.md`. After editing docs, rebuild the index: `python3 ~/.cursor/llm-wiki/scripts/build-doc-deps-index.py --tld ~/src`.
+4. **Archive (retire):** Mark superseded content with date and link to replacement; move stale pages to `wiki/archive/` — do not leave two conflicting truths.
+5. **Never write wiki files into employer/team git repos** — personal wiki stays under `~/.cursor/llm-wiki/`. Project rules in shared repos still win when they conflict with personal wiki content; surface conflicts in chat.
 
-**Skill path:** `~/.agents/skills/karpathy-llm-wiki/SKILL.md`
+**Skill paths:** `~/.agents/skills/karpathy-llm-wiki/SKILL.md`, `~/.agents/skills/wiki-doc-deps/SKILL.md`

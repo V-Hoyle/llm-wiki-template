@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# >>> wiki-doc-deps hook >>> (managed by ~/.cursor/llm-wiki/scripts/install-repo-hooks.sh)
+DIR="$(cd "$(dirname "$0")" && pwd)"
+# shellcheck source=/dev/null
+. "$DIR/_wiki-doc-deps-common.sh"
+if git rev-parse --verify -q HEAD^ >/dev/null 2>&1; then
+  wiki_deps_report HEAD^ HEAD
+fi
+wiki_deps_run_local_chain "$DIR/post-commit.local"
+# <<< wiki-doc-deps hook <<<

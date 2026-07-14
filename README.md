@@ -40,6 +40,9 @@ npx add-skill Astro-Han/karpathy-llm-wiki
 | `launchd/` | macOS plist templates for background jobs |
 | `schema/topics.json` | Example topic → repo mapping |
 | `wiki/` | Empty index + log stubs |
+| `DOC-DEPENDENCIES.md` | Doc file-dependency system: `**Depends:**` convention, `wiki-deps` CLI, MCP server, git + Cursor reminder hooks |
+| `hooks/repo-hooks/` | Git hooks (post-commit/merge/checkout) installed into tracked repos to remind you which docs depend on changed files |
+| `skills/wiki-doc-deps/` | Skill making the `**Depends:**` line required on every article |
 
 ## Architecture
 

@@ -18,6 +18,12 @@
         "command": "./hooks/wiki-session-end.sh",
         "timeout": 3
       }
+    ],
+    "postToolUse": [
+      {
+        "command": "./hooks/wiki-doc-deps.sh",
+        "timeout": 5
+      }
     ]
   }
 }

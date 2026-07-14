@@ -362,4 +362,20 @@ Includes hook scripts, worker scripts, launchd plists, example `topics.json`, an
 
 ---
 
+## Phase 5 — Doc dependency indexing (optional but recommended)
+
+Every article can declare the source files it was compiled from via a `**Depends:**`
+line, so git + Cursor hooks remind you (and agents) which docs need updating when a
+tracked file changes. `install.sh` sets up the Cursor hook, rule, and skill; then:
+
+```bash
+wiki-deps install-hooks --tld ~/src   # git reminder hooks into tracked repos
+wiki-deps index --tld ~/src           # build/validate the queryable index
+```
+
+To backfill an existing wiki (parallelize across agents) and for the full reference,
+see [DOC-DEPENDENCIES.md](DOC-DEPENDENCIES.md).
+
+---
+
 *Template repo: [github.com/rylanhess/llm-wiki-template](https://github.com/rylanhess/llm-wiki-template)*
