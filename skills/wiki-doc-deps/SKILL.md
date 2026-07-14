@@ -33,7 +33,9 @@ Rules:
   `/**` **glob** for docs covering a whole module/tree. `**` spans
   subdirectories; `*` stays within one path segment.
 - Derive entries from the doc's `**Sources:**` line and any `path:line` cites.
-- If a doc derives from no tracked-repo file, write `**Depends:** (none)`.
+- If a doc derives from no tracked-repo file, write exactly `**Depends:** (none)`.
+  The tooling treats `(none)` / `none` (case-insensitive) as zero dependencies; the
+  line is still required so every doc is accounted for.
 
 ## After editing docs
 

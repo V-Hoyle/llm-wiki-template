@@ -71,7 +71,12 @@ def source_repos() -> set[str]:
 
 
 def _split_entries(raw: str) -> list[str]:
-    return [e.strip() for e in raw.split(";") if e.strip()]
+    # "(none)"/"none" is the explicit "no tracked-repo dependencies" sentinel.
+    return [
+        e.strip()
+        for e in raw.split(";")
+        if e.strip() and e.strip().lower() not in ("(none)", "none")
+    ]
 
 
 def parse_doc(path: Path) -> Doc:

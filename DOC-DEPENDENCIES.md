@@ -17,7 +17,7 @@ Each article carries one `**Depends:**` line, immediately after `**Updated:**`:
 - `<repo>` = the tracked repo's folder name under your source TLD (e.g. `~/src`); it matches an entry in `schema/topics.json` `sourceRepos`.
 - Paths are relative to the repo root.
 - Exact files for file-specific docs; a directory or `/**` glob for whole-module docs. `**` spans subdirectories, `*` stays within one segment.
-- `**Depends:** (none)` when a doc derives from no tracked-repo files.
+- **No dependencies:** when a doc derives from no tracked-repo files (e.g. pages compiled from Cursor plans/sessions or synthesized answers), write exactly `**Depends:** (none)`. The tooling treats `(none)` / `none` (case-insensitive) as zero dependencies — the line is still required so every doc is accounted for, but it matches no file changes.
 
 ## Components
 
