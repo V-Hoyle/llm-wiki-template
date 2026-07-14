@@ -14,7 +14,14 @@ const QUEUE_FILE = join(WIKI_ROOT, "queue", "pending.jsonl");
 const PROCESSED_DIR = join(WIKI_ROOT, "queue", "processed");
 const STATE_DIR = join(WIKI_ROOT, ".state");
 const RATE_LIMIT_FILE = join(STATE_DIR, "ingest-ratelimit.json");
-const SKILL_PATH = join(homedir(), ".agents", "skills", "karpathy-llm-wiki", "SKILL.md");
+const KARPATHY_SKILL_PATH = join(
+  homedir(),
+  ".agents",
+  "skills",
+  "karpathy-llm-wiki",
+  "SKILL.md",
+);
+const DOC_DEPS_SKILL_PATH = join(WIKI_ROOT, "skills", "wiki-doc-deps", "SKILL.md");
 const MAX_PER_HOUR = 4;
 
 interface QueueEntry {
@@ -107,13 +114,23 @@ const buildPrompt = (entry: QueueEntry): string => {
   const isAdhoc = entry.ingest_kind === "adhoc";
   const topicHint = (entry.topics ?? []).join(", ") || "decisions";
   const rawPath = entry.raw_path ?? "";
+  const dependencyInstructions = [
+    `Karpathy wiki skill: ${KARPATHY_SKILL_PATH}`,
+    `Document dependency skill: ${DOC_DEPS_SKILL_PATH}`,
+    "",
+    "Read and follow both skill files before editing the wiki.",
+    "Every created or updated wiki article must have exactly one dependency metadata line.",
+    "Format: **Depends:** repo/path/**; other-repo/path/file.ext",
+    "Do not use backticks, commas, or unqualified paths. Use **Depends:** (none) only when no tracked source files apply.",
+    "Before finishing, run ./scripts/wiki-deps index and resolve every validation warning.",
+  ];
 
   const lines = isAdhoc
     ? [
         "Ingest this ad-hoc source file into the local Karpathy LLM wiki.",
         "",
         `Wiki root: ${WIKI_ROOT}`,
-        `Skill: ${SKILL_PATH}`,
+        ...dependencyInstructions,
         "",
         "The source is already copied to raw/. Follow karpathy-llm-wiki SKILL.md — Ingest workflow:",
         "1. Do NOT re-copy raw/ — use the existing raw file below",
@@ -130,7 +147,7 @@ const buildPrompt = (entry: QueueEntry): string => {
         "Ingest this Cursor session into the local Karpathy LLM wiki.",
         "",
         `Wiki root: ${WIKI_ROOT}`,
-        `Skill: ${SKILL_PATH}`,
+        ...dependencyInstructions,
         "",
         "Follow karpathy-llm-wiki SKILL.md exactly:",
         "1. Save session source to raw/decisions/ (redact any secrets)",
